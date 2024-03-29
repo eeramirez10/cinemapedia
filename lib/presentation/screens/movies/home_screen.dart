@@ -1,5 +1,6 @@
-import 'package:cinemapedia/config/constants/environment.dart';
 import 'package:cinemapedia/presentation/providers/movies/movies_providers.dart';
+import 'package:cinemapedia/presentation/providers/movies/movies_slideshow_provider.dart';
+import 'package:cinemapedia/presentation/widgets/movies/movie_horizontal_listview.dart';
 import 'package:cinemapedia/presentation/widgets/movies/movies_slideshow.dart';
 import 'package:cinemapedia/presentation/widgets/share/custom_appbar.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,17 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: _HomeView());
+    return Scaffold(
+      body: const _HomeView(),
+      bottomNavigationBar: BottomNavigationBar(
+        elevation: 0,
+        items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.home_max),label: "Home"),
+        BottomNavigationBarItem(icon: Icon(Icons.label_outline), label: "Categorias"),
+        BottomNavigationBarItem(icon: Icon(Icons.favorite_border_outlined), label: "Favoritos"),
+
+      ]),
+    );
   }
 }
 
@@ -33,21 +44,17 @@ class _HomeViewState extends ConsumerState<_HomeView> {
   @override
   Widget build(BuildContext context) {
     final nowPlayingMovies = ref.watch(nowPlayingMoviesProvider);
-
+    final moviesSlide = ref.watch(moviesSlidesShowProvider);
     return Column(
       children: [
-        CustomAppbar(),
-        MoviesSlideshow(movies: nowPlayingMovies)
-        // Expanded(
-        //     child: ListView.builder(
-        //         itemCount: nowPlayingMovies.length,
-        //         itemBuilder: (context, i) {
-        //           final movie = nowPlayingMovies[i];
+        const CustomAppbar(),
+        MoviesSlideshow(movies: moviesSlide),
+        MovieHorizontalListView(
+          movies: nowPlayingMovies,
+          title: 'En Cines',
+          subTitle: 'Lunes 20',
+        )
 
-        //           return ListTile(
-        //             title: Text(movie.title),
-        //           );
-        //         }))
       ],
     );
   }
