@@ -1,7 +1,9 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:cinemapedia/config/helpers/human_formats.dart';
 import 'package:cinemapedia/domain/entities/movie.dart';
+import 'package:cinemapedia/presentation/screens/movies/movie_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class MovieHorizontalListView extends StatefulWidget {
 
@@ -125,9 +127,10 @@ class _ImageSlide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+
+    const movieRouteName = MovieScreen.name;
     return SizedBox(
       width: 150,
-      
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: Image.network(
@@ -143,7 +146,12 @@ class _ImageSlide extends StatelessWidget {
                ),
              );
             }
-            return FadeIn(child: child);
+            return GestureDetector(
+              child: FadeIn(child: child),
+              onTap: () {
+                context.push('/$movieRouteName/${movie.id}');
+              },
+            );
           },
         ), 
       ),
