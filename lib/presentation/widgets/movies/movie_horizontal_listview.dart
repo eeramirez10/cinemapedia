@@ -137,6 +137,7 @@ class _ImageSlide extends StatelessWidget {
           movie.posterPath,
           fit: BoxFit.cover, 
           width: 150,
+          height: 230,
           loadingBuilder: (context, child, loadingProgress) {
             if(loadingProgress != null){
              return const Padding(

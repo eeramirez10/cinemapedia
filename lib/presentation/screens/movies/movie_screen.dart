@@ -1,4 +1,6 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:cinemapedia/domain/entities/movie.dart';
+import 'package:cinemapedia/presentation/providers/actors/actors_by_movie_provider.dart';
 import 'package:cinemapedia/presentation/providers/movies/movie_info_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +19,7 @@ class MovieScreenState extends ConsumerState<MovieScreen> {
   void initState() {
     super.initState();
     ref.read(movieInfoProvider.notifier).loadMovie(widget.movieId);
+    ref.read(actorsByMovieProvider.notifier).loadActors(widget.movieId);
   }
 
   @override
@@ -36,8 +39,137 @@ class MovieScreenState extends ConsumerState<MovieScreen> {
         slivers: [
           _CustomSliverAppBar(
             movie: movieInfo,
-          )
+          ),
+          SliverList(
+              delegate: SliverChildBuilderDelegate(
+            childCount: 1,
+            (context, index) {
+              return _MovieDetails(movie: movieInfo);
+            },
+          ))
         ],
+      ),
+    );
+  }
+}
+
+class _MovieDetails extends StatelessWidget {
+  final Movie movie;
+  const _MovieDetails({required this.movie});
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final textStyles = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.network(
+                    movie.posterPath,
+                    width: size.width * 0.3,
+                    fit: BoxFit.cover,
+                  )),
+              const SizedBox(
+                width: 10,
+              ),
+              SizedBox(
+                width: (size.width - 40) * 0.7,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  Text(
+                    movie.title,
+                    style: textStyles.titleLarge,
+                    textAlign: TextAlign.start,
+                  ),
+                  const SizedBox(
+                    height: 5,
+                  ),
+                  Text(
+                    movie.overview,
+                    style: textStyles.bodyLarge,
+                  )
+                ]),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(8),
+          child: Wrap(
+            children: [
+              ...movie.genreIds.map((gender) => Container(
+                    padding: const EdgeInsets.only(right: 5),
+                    child: Chip(label: Text(gender), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),),
+                  ))
+            ],
+          ),
+        ),
+
+        _ActorsByMovie(movieId: movie.id.toString()),
+        
+        const SizedBox(
+          height: 20,
+        )
+      ],
+    );
+  }
+}
+
+
+class _ActorsByMovie extends ConsumerWidget {
+  final String movieId;
+  const _ActorsByMovie({ required this.movieId});
+
+  @override
+  Widget build(BuildContext context, ref) {
+
+    final actorsRef = ref.watch(actorsByMovieProvider);
+
+    if(actorsRef[movieId] == null){
+      return const Center(
+        child: CircularProgressIndicator(strokeAlign: 2),
+      );
+    }
+
+    final actors = actorsRef[movieId];
+    return SizedBox(
+      height: 300,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: actors!.length,
+        itemBuilder:(context, index) {
+          final actor = actors[index];
+
+          return  FadeInRight(
+            child: Container(
+              padding: const EdgeInsets.all(8.0),
+              width: 135,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Image.network(actor.profilePath, height: 180, width: 135, fit: BoxFit.cover,),
+                  ),
+                  const SizedBox(height: 5,),
+            
+                  Text(actor.name, maxLines: 1,),
+                  Text(actor.character ?? '',
+                    maxLines: 2,
+                    style: const TextStyle(fontWeight: FontWeight.bold, overflow:  TextOverflow.ellipsis),
+                  )
+              ]),
+            ),
+          );
+        },
       ),
     );
   }
@@ -57,17 +189,22 @@ class _CustomSliverAppBar extends StatelessWidget {
       shadowColor: Colors.red,
       flexibleSpace: FlexibleSpaceBar(
         titlePadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        title: Text(
-          movie.title,
-          style: const TextStyle(fontSize: 20),
-          textAlign: TextAlign.start,
-        ),
+        // title: Text(
+        //   movie.title,
+        //   style: const TextStyle(fontSize: 20),
+        //   textAlign: TextAlign.start,
+        // ),
         background: Stack(
           children: [
             SizedBox.expand(
               child: Image.network(
                 movie.posterPath,
                 fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if(loadingProgress != null) return  FadeIn(child: const SizedBox()) ;
+
+                  return FadeIn(child: child);
+                },
               ),
             ),
             const SizedBox.expand(
@@ -83,11 +220,13 @@ class _CustomSliverAppBar extends StatelessWidget {
             const SizedBox.expand(
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                 
-                        stops: [0.0, 0.3],
-                        colors: [ Colors.black87, Colors.transparent,])),
+                    gradient: LinearGradient(begin: Alignment.topLeft, stops: [
+                  0.0,
+                  0.3
+                ], colors: [
+                  Colors.black87,
+                  Colors.transparent,
+                ])),
               ),
             )
           ],
